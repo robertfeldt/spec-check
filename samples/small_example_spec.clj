@@ -17,4 +17,8 @@
   (is true? (every? (fn [v] (== 0 (rem v 2))) [2 4 6]))
   (is true? (every? (fn [v] (== 0 (rem v 2))) [2 4 7]))
   (s)
+  (all-are true?
+    (== 1 1)
+    (not= 2 3)
+  )
 )

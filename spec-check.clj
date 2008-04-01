@@ -32,7 +32,7 @@
 
 (defn- print-progress [outcome]
 	(print (trial-outcome-description outcome))
-	(. *out* (flush)))	
+	(. *out* (flush)))
 
 (def *failing-trials*)
 (def *checking-cases* false)
@@ -120,3 +120,8 @@
 (defmacro isnt [& fn-and-args]
   "An expectation that FN applied to ARGS should return true."
   `(expectation (codestr "isnt" ~@fn-and-args) (complement ~(first fn-and-args)) ~@(rest fn-and-args)))
+
+(defmacro all-are [checkfn & forms]
+  "State multiple expectations in one go, namely that 
+   CHECKFN applied to each form in FORMS should return true."
+  `(for [f# [~@forms]] (is ~checkfn f#)))
