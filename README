@@ -71,7 +71,7 @@ or you can get a tarball of the latest repo version from
 To write your own specs you only need to get the latest stable
 version of the spec-check.clj file here:
 
-    
+    http://github.com/robertfeldt/spec-check/tree/master/latest_stable/spec-check.clj?raw=true    
 
 ## Where can I find more examples?
 
