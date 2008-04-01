@@ -1,0 +1,36 @@
+1. Why we have to explicitly state when to check something
+----------------------------------------------------------
+The simplest possible specing framework would allow any expressions that evaluates to
+true or false to be used as spec cases. This would allow code like:
+
+  (check 
+    (= 1 1)
+    (not= 1 2))
+
+to run two spec cases. However the problem with this design is in cases like
+
+  (check
+    (let [a 10 b 20]
+      (= (+ a 10) b)
+      (not= a (- b 10))
+      (= true (every? #(= 0 (rem %1 2)) [2 a b]))
+      (= false (string? 1))))
+
+where the value from the first expression in the let binding would not be retuned
+to the check function and thus would be missed. Thus we have decided that we must
+always explicitly state that an expression is a spec case. In most situations
+you will do this by using the simple shortcuts is=, isnot= etc.
+
+  (check
+    (let [a 10 b 20]
+      (is= (+ a 10) b)
+      (isnot= a (- b 10))
+      (istrue (every? #(= 0 (rem %1 2)) [0 2 4 6 8]))
+      (isfalse (string? 1))))
+  
+We can also use the general function all-true to check that a sequence of forms
+are all spec cases and should all return true. Example:
+
+  (check (all-true
+    (= 1 1)
+    (not= 1 2)))

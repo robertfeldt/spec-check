@@ -1,0 +1,7 @@
+TODO/IDEAS:
+ * Add isnt which is complement to is
+ * Make it runnable from the command line. Example commands:
+     bar       spec-re          (fires up a Swing progressbar and shows red/green progress)
+     autocheck cljfiles-re &    (sits in background and re-runs specs whenever there is a file change)
+ * Produce html files showing examples, can they tie into the API docs format?
+ * Allow specs to be added as :test or :spec tag to function metadata and use that when checking.

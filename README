@@ -1,0 +1,83 @@
+    spec-check
+    Copyright (c) Robert Feldt. All rights reserved.
+    The use and distribution terms for this software are covered by the
+    Common Public License 1.0 (http://opensource.org/licenses/cpl.php)
+    which can be found in the file CPL.TXT at the root of this distribution.
+    By using this software in any fashion, you are agreeing to be bound by
+        the terms of this license.
+    You must not remove this notice, or any other, from this software.
+    
+spec-check - Specification and autochecking of sw behavior expectations
+=======================================================================
+    Author:  Robert Feldt
+    Email:   robert.feldt (at) gmail.com
+    Version: 0.1
+    Date:    20080401
+    License: Common Public License
+    
+
+## What is it?
+
+spec-check is a small Clojure library for specifying expectations on 
+the behavior of software and then checking them. It is similar to the 
+xUnit family of unit testing frameworks but also to RSpec for 
+behavior-driven testing/specification. It extends on both of these
+frameworks by addign higher-order checking capabilities like random and 
+exhaustive testing.
+
+
+## How can I use it?
+
+Here is a small example of how to use spec-check:
+
+    (load-file "path/to/spec-check.clj")
+    (clojure/refer 'spec)
+    
+    ; Collect specifications in normal Clojure functions
+    (defn spec-myspec []
+      (spec "My first spec"
+        (is == 1 1)
+        (is not= 1 2)
+        (is true? (== 'a 'a))
+        (isnt true? (== 'a 'b))
+        (is false? true) ; should fail!
+    ))
+    
+    ; and check it
+    (check (spec-myspec))
+    
+if you save that in a file myspec.clj and run it you get:
+
+    ...F
+    FAILURE:
+      the code was: (false? (= 1 (count [1]))), but
+      arguments was: true
+    
+    Finished in 0.00213 seconds
+    
+    4 expectations checked, 1 failed
+
+
+## Where can I find more examples?
+
+Check the samples directory, especially factorial\_spec.clj
+(which shows parameterized specs) and clojure/nums\_spec.clj
+(the start of a spec for Clojures Nums).
+
+
+## What is the current status?
+
+Done:
+
+* Core with expectations, specs and checking
+
+Todo:
+
+* Random testing via lazy collections
+* Extend so can be run from command-line to load several specs and run them
+  together.
+* Better reporting of line numbers where expectation failed
+* Write self-checks in specs/spec-check_spec.clj
+* Exhaustive testing via lazy collections
+* Verbose output formats to get lists of example uses from specs
+* Add more specs for Clojure's core funcitonality
