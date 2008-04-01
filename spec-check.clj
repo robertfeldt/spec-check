@@ -1,5 +1,5 @@
 ;; spec-check - 
-;;   specification and autochecking of software behavior expectations
+;;   Specification & checking of software behavior expectations
 ;;
 ;; Copyright (c) Robert Feldt. All rights reserved.
 ;; The use and distribution terms for this software are covered by the

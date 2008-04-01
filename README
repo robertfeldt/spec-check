@@ -7,7 +7,7 @@
         the terms of this license.
     You must not remove this notice, or any other, from this software.
     
-spec-check - Specification and autochecking of sw behavior expectations
+spec-check - Specification & checking of software behavior expectations
 =======================================================================
     Author:  Robert Feldt
     Email:   robert.feldt (at) gmail.com
@@ -19,11 +19,19 @@ spec-check - Specification and autochecking of sw behavior expectations
 ## What is it?
 
 spec-check is a small Clojure library for specifying expectations on 
-the behavior of software and then checking them. It is similar to the 
-xUnit family of unit testing frameworks but also to RSpec for 
-behavior-driven testing/specification. It extends on both of these
-frameworks by addign higher-order checking capabilities like random and 
-exhaustive testing.
+the behavior of software and then checking them.
+
+It has similarities with the xUnit family of unit testing frameworks 
+but is more in the spirit of the recent Behavior-Driven specification 
+frameworks like RSpec. It extends on both of these styles by adding 
+higher-order checking capabilities like random (à la Quickcheck) and 
+exhaustive testing (à la Lazy Smallcheck).
+
+Links:
+http://en.wikipedia.org/wiki/XUnit
+http://rspec.info/
+http://www.cs.chalmers.se/~rjmh/QuickCheck/
+http://www-users.cs.york.ac.uk/~mfn/lazysmallcheck/
 
 
 ## How can I use it?
