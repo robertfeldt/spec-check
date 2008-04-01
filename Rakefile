@@ -2,7 +2,7 @@ file "readme.html" => "README" do
   sh 'markdown README > readme.html'
 end
 
-task :default => ["readme.html"]
+task :default => :samples
 
 task :clobber do
   sh 'rm -rf latest_stable/readme.html'
@@ -12,7 +12,7 @@ task :check do
   # Run self-checks!
 end
 
-task :allchecks do
+task :samples do
   Dir["**/*_spec.clj"].each do |file|
     puts ""
     sh "clj #{file}"

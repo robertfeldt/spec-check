@@ -40,8 +40,8 @@
 
 (def *inverted-reporting-fns* {
 	=    (fn [f as] (str "(not= " (join as) ")"))
-	==   (fn [f as] (str "arguments are not the same: " (join as)))
-	not= (fn [f as] (str "arguments are the same: " (join as)))
+	==   (fn [f as] (str "arguments are *NOT* the same: " (join as)))
+	not= (fn [f as] (str "arguments *ARE* the same: " (join as)))
 })
 
 (defn- exception? [outcome] (and (= (class outcome) (class {})) (= (:outcome outcome) 'exception)))
@@ -72,12 +72,15 @@
 (def *report-all-trials* report-all-trials)
 (def *spec-stack*)
 
-(defmacro is [& fn-and-args]
-  "An expectation that FN applied to ARGS should return true."
+(defmacro ismacro [code & fn-and-args]
   `(let [outcome# (try (~@fn-and-args) (catch java.lang.Exception e# {:outcome 'exception :exception e#}))]
 	(*report-progress* outcome#)
-	(*log-trial* (print-str '(~@fn-and-args)) outcome# 
-	                        (fn [] ~(first fn-and-args)) (fn [] [~@(rest fn-and-args)]))))
+	(*log-trial* ~code outcome# (fn [] ~(first fn-and-args)) (fn [] [~@(rest fn-and-args)]))))
+
+(defmacro is [& fn-and-args]
+  "An expectation that FN applied to ARGS should return true."
+  `(ismacro (str "(is" ~@(for [e# fn-and-args] (str " " (print-str e#))) ")") 
+	        ~(first fn-and-args) ~@(rest fn-and-args)))
 
 (defmacro spec [desc & body]
   "A spec is described by DESC and defined by expectations and specs in
@@ -108,3 +111,9 @@
 	           *spec-stack* []]
 	   (let [timetaken# (just-time (do ~@body))]
 	     (*report-all-trials* timetaken#)))))
+
+;; Utility functions and macros that builds on the core
+(defmacro isnt [& fn-and-args]
+  "An expectation that FN applied to ARGS should return false."
+  `(ismacro (str "(isnt" ~@(for [e# fn-and-args] (str " " (print-str e#))) ")") 
+	        (complement ~(first fn-and-args)) ~@(rest fn-and-args)))

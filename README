@@ -30,33 +30,36 @@ exhaustive testing.
 
 Here is a small example of how to use spec-check:
 
-    (load-file "path/to/spec-check.clj")
+    (load-file "spec-check.clj")
     (clojure/refer 'spec)
     
     ; Collect specifications in normal Clojure functions
     (defn spec-myspec []
       (spec "My first spec"
         (is == 1 1)
-        (is not= 1 2)
-        (is true? (== 'a 'a))
-        (isnt true? (== 'a 'b))
-        (is false? true) ; should fail!
+        (is not= 4 (+ 3 1)) ; should fail!
+        (isnt == 1 2)
+        (is true? (= 'a 'a))
+        (isnt true? (== 1 (count [1]))) ; should fail!
     ))
     
     ; and check it
     (check (spec-myspec))
-    
+
 if you save that in a file myspec.clj and run it you get:
 
-    ...F
+    .F..F
     FAILURE:
-      the code was: (false? (= 1 (count [1]))), but
+      the code was: (is not= 4 (+ 3 1)), but
+      arguments *ARE* the same: 4 4
+    FAILURE:
+      the code was: (isnt true? (== 1 (count [1]))), but
       arguments was: true
     
-    Finished in 0.00213 seconds
+    Finished in 0.002633 seconds
     
-    4 expectations checked, 1 failed
-
+    5 expectations checked, 2 failed
+    
 
 ## Where can I get it?
 
@@ -85,6 +88,7 @@ Check the samples directory, especially factorial\_spec.clj
 Done:
 
 * Core with expectations, specs and checking
+* Added utility macro isnt which is complement to is
 
 Todo:
 
@@ -101,7 +105,6 @@ Todo:
 
 Possible Todos / Ideas:
 
-* Add isnt which is complement to is
 * Make it runnable from the command line. Example commands:
   * bar spec-re (fires up a Swing progressbar and shows red/green progress)
   * autocheck cljfiles-re & (sits in background and re-runs specs whenever there is a file change)

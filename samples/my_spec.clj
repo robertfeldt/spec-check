@@ -5,9 +5,10 @@
 (defn spec-myspec []
   (spec "My first spec"
     (is == 1 1)
-    (is not= 1 2)
+    (isnt == 1 2)
+    (is not= 4 (+ 3 1)) ; should fail!
     (is true? (= 'a 'a))
-    (is false? (= 1 (count [1]))) ; should fail!
+    (isnt true? (== 1 (count [1]))) ; should fail!
 ))
 
 ; and check it
