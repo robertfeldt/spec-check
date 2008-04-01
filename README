@@ -58,6 +58,21 @@ if you save that in a file myspec.clj and run it you get:
     4 expectations checked, 1 failed
 
 
+## Where can I get it?
+
+If you have git you can simply
+
+    git clone git://github.com/robertfeldt/spec-check.git
+
+or you can get a tarball of the latest repo version from
+
+    http://github.com/robertfeldt/spec-check/tarball/master
+
+To write your own specs you only need to get the latest stable
+version of the spec-check.clj file here:
+
+    
+
 ## Where can I find more examples?
 
 Check the samples directory, especially factorial\_spec.clj
