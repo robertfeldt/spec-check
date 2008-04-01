@@ -1,4 +1,3 @@
 Known Bugs
 ----------
-* all-are does not run its expectations
 * when arguments are strings they are not printed nicely in failure messages

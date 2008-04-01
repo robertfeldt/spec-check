@@ -72,7 +72,9 @@
 (defn- report-all-trials [seconds-taken]
   (println (join *failing-trials* "\n" "\n")) (newline)
   (println "Finished in" seconds-taken "seconds") (newline)
-  (println *num-trials* "expectations checked," (count *failing-trials*) "failed"))
+  (let [nfailures (count (filter (fn [s] (= \F (nth s 0))) *failing-trials*))
+        nexceptions (- (count *failing-trials*) nfailures)]
+    (println *num-trials* "expectations checked," nfailures "failed," nexceptions "raised exceptions")))
 
 (def *report-progress* print-progress)
 (def *log-trial* log-trial)
@@ -129,8 +131,3 @@
 (defmacro isnt [& fn-and-args]
   "An expectation that FN applied to ARGS should return true."
   `(expectation (codestr "isnt" ~@fn-and-args) (complement ~(first fn-and-args)) ~@(rest fn-and-args)))
-
-(defmacro all-are [checkfn & forms]
-  "State multiple expectations in one go, namely that 
-   CHECKFN applied to each form in FORMS should return true."
-  `(for [f# [~@forms]] `(is ~~checkfn ~f#)))
