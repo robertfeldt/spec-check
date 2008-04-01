@@ -14,7 +14,7 @@
 (in-ns 'spec)
 (clojure/refer 'clojure)
 
-(defn join
+(defn- join
 	"Join values to a string by inserting SERPARATOR between them 
 	and prefixing with START."
 	([values]           (join values " "))
@@ -24,13 +24,13 @@
 	    ""
 	    (str start (reduce (fn [acc e] (str acc separator (print-str e))) values)))))
 
-(defn trial-outcome-description [outcome]
+(defn- trial-outcome-description [outcome]
   (cond
     (= true  outcome) \.
 	(= false outcome) \F
 	:else             \E))
 
-(defn print-progress [outcome]
+(defn- print-progress [outcome]
 	(print (trial-outcome-description outcome))
 	(. *out* (flush)))	
 
@@ -44,22 +44,22 @@
 	not= (fn [f as] (str "arguments are the same: " (join as)))
 })
 
-(defn exception? [outcome] (and (= (class outcome) (class {})) (= (:outcome outcome) 'exception)))
-(defn failure-or-exception? [outcome] (or (not outcome) (exception? outcome)))
+(defn- exception? [outcome] (and (= (class outcome) (class {})) (= (:outcome outcome) 'exception)))
+(defn- failure-or-exception? [outcome] (or (not outcome) (exception? outcome)))
 
-(defn show-failing-trial [code outcome fnfn argsfn]
+(defn- show-failing-trial [code outcome fnfn argsfn]
 	(if (exception? outcome)
 	  (str "EXCEPTION:\n  the code was: " code ", but\n  it raised " (:exception outcome))
 	  (let [func (fnfn) 
 		    report-fn (or (get *inverted-reporting-fns* func) (fn [f as] (str "arguments was: " (print-str (first as)))))]
 		 (str "FAILURE:\n  the code was: " code ", but\n  " (report-fn func (argsfn))))))
 
-(defn log-trial [code outcome fnfn argsfn]
+(defn- log-trial [code outcome fnfn argsfn]
 	(set! *num-trials* (+ 1 *num-trials*))
 	(if (failure-or-exception? outcome)
 		(set! *failing-trials* (conj *failing-trials* (show-failing-trial code outcome fnfn argsfn)))))
 
-(defn report-all-trials [seconds-taken]
+(defn- report-all-trials [seconds-taken]
   (newline)
   (println (join *failing-trials* "\n"))
   (newline)
@@ -73,17 +73,23 @@
 (def *spec-stack*)
 
 (defmacro is [& fn-and-args]
+  "An expectation that FN applied to ARGS should return true."
   `(let [outcome# (try (~@fn-and-args) (catch java.lang.Exception e# {:outcome 'exception :exception e#}))]
 	(*report-progress* outcome#)
 	(*log-trial* (print-str '(~@fn-and-args)) outcome# 
 	                        (fn [] ~(first fn-and-args)) (fn [] [~@(rest fn-and-args)]))))
 
-(defmacro spec [desc & forms]
-  `(fspec nil ~desc ~@forms))
+(defmacro spec [desc & body]
+  "A spec is described by DESC and defined by expectations and specs in
+   BODY."
+  `(fspec nil ~desc ~@body))
 
-(defmacro fspec [func desc & forms]
+(defmacro fspec [func desc & body]
+  "A function spec (fspec) is a spec associated with the function FUNC. 
+   It is is described by DESC and defined by expectations and specs in
+   BODY."
 	`(do ;(*cache-spec* ~func ~desc ~forms)
-	     ~@forms))
+	     ~@body))
 
 (defmacro just-time
   "Evaluates expr and returns the number of seconds it took."
@@ -93,6 +99,7 @@
      (/ (- (. System (nanoTime)) start#) 1000000000.0)))
 
 (defmacro check [& body]
+  "Check specs and expectations in BODY"
   `(if *checking-cases*
 	 (do ~@body) ; This is not the top-level check so just run the spec
 	 (binding [*checking-cases* true ; This is the top-level check so setup for check, run spec and then report

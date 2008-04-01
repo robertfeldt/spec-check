@@ -12,6 +12,13 @@ task :check do
   # Run self-checks!
 end
 
+task :allchecks do
+  Dir["**/*_spec.clj"].each do |file|
+    puts ""
+    sh "clj #{file}"
+  end
+end
+
 task :preprelease => [:clobber] do
   # Copy spec-check.clj to latest_stable
   sh 'cp spec-check.clj latest_stable'
