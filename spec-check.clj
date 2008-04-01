@@ -35,8 +35,8 @@
 	:else                \U)) ; U just for debugging purposes
 
 (defn- print-progress [outcome]
-	(print (trial-outcome-description outcome)))
-;	(. *out* (flush)))   Don't know why this doesn't work
+	(print (trial-outcome-description outcome))
+	(. *out* (flush)))
 
 (def *failing-trials*)
 (def *checking-cases* false)

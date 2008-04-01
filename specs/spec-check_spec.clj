@@ -32,14 +32,7 @@
   (fspec trial-outcome-description ""
     (is = \. (trial-outcome-description true))
     (is = \F (trial-outcome-description false))
-    (is = \E (trial-outcome-description *e*))
-  )
-)
-
-(defn spec-print-progress []
-  (fspec print-progress ""
-    (is = "." (with-out-str (print-progress true)))
-  )
+    (is = \E (trial-outcome-description *e*)))
 )
 
 (defn spec-exception? []
@@ -56,27 +49,22 @@
     (is failure-or-exception? false)
     (is failure-or-exception? *e*)
     (isnt failure-or-exception? true)
-    (isnt failure-or-exception? 1)
-  )
+    (isnt failure-or-exception? 1))
 )
-
 
 (defn spec-show-failing-trial []
   (fspec show-failing-trial "with exception map as argument"
-    (is = "EXCEPTION \n  expectation was: !, but\n  it raised java.lang.Exception" 
-	      (show-failing-trial "!" *e* #('dummy) #('dummy) []))
-  )
+    (is = "EXCEPTION\n  expectation was: !, but\n  it raised java.lang.Exception" 
+	      (show-failing-trial "!" *e* #('dummy) #('dummy) [])))
 
   (fspec show-failing-trial "with failure as argument"
-    (is = "FAILURE \n  expectation was: !, but\n  arguments was: false"
-          (show-failing-trial "!" false (fn [] true?) (fn [] [false]) []))
-  )
+    (is = "FAILURE\n  expectation was: !, but\n  arguments was: false"
+          (show-failing-trial "!" false (fn [] true?) (fn [] [false]) [])))
 )
 
 (check
   (spec-join)
   (spec-trial-outcome-description)
-  (spec-print-progress)
   (spec-exception?)
   (spec-failure-or-exception?)
   (spec-show-failing-trial)
