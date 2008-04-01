@@ -13,7 +13,7 @@ task :selfcheck do
 end
 
 task :samples do
-  Dir["**/*_spec.clj"].each do |file|
+  Dir["samples/**/*_spec.clj"].each do |file|
     puts ""
     sh "clj #{file}"
   end

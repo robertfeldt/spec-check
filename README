@@ -19,18 +19,20 @@ spec-check - Specification & checking of software behavior expectations
 ## What is it?
 
 spec-check is a small Clojure library for specifying expectations on 
-the behavior of software and then checking them.
+the behavior of software/code and then checking these expectations.
 
 It has similarities with the xUnit family of unit testing frameworks 
 but is more in the spirit of the recent Behavior-Driven specification 
 frameworks like RSpec. It extends on both of these styles by adding 
-higher-order checking capabilities like random (à la Quickcheck) and 
-exhaustive testing (à la Lazy Smallcheck).
+higher-order checking capabilities like random (à la Quickcheck and
+implemented in Lisp in Clickcheck) and exhaustive testing (à la Smallcheck).
 
 Links:
 http://en.wikipedia.org/wiki/XUnit
 http://rspec.info/
 http://www.cs.chalmers.se/~rjmh/QuickCheck/
+http://www.accesscom.com/~darius/software/clickcheck.html
+http://www.cs.york.ac.uk/fp/darcs/smallcheck/README
 http://www-users.cs.york.ac.uk/~mfn/lazysmallcheck/
 
 
@@ -104,6 +106,7 @@ Todo:
 * Stack of spec descriptions updated and then used when reporting failures
 * Random testing via lazy collections
 * Add more self-checks in specs/spec-check_spec.clj
+* Fix so fspec actually saves specs in meta data for func?
 * Extend so can be run from command-line to load several specs and run them
   together.
 * Better reporting of line numbers where expectation failed
@@ -124,7 +127,9 @@ Possible Todos / Ideas:
 ## Isn't this just a unit testing framework?
 
 I think it is important which words we use and "specifying behavior" is 
-more in line with what we ultimately want than "testing units".
+more in line with what we ultimately want than "testing units". However,
+it is perfectly fine to do unit-level code testing in the style of
+xUnit in spec-check. In fact, that is how it will often be used.
 
 
 ## Why are the self checks in the specs dir?
