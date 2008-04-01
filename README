@@ -88,7 +88,9 @@ Done:
 
 Todo:
 
+* Stack of spec descriptions updated and then used when reporting failures
 * Random testing via lazy collections
+* Fix Exception reporting bug
 * Extend so can be run from command-line to load several specs and run them
   together.
 * Better reporting of line numbers where expectation failed
@@ -96,3 +98,12 @@ Todo:
 * Exhaustive testing via lazy collections
 * Verbose output formats to get lists of example uses from specs
 * Add more specs for Clojure's core funcitonality
+
+Possible Todos / Ideas:
+
+* Add isnt which is complement to is
+* Make it runnable from the command line. Example commands:
+  * bar spec-re (fires up a Swing progressbar and shows red/green progress)
+  * autocheck cljfiles-re & (sits in background and re-runs specs whenever there is a file change)
+* Produce html files showing examples, can they tie into the API docs format?
+* Allow specs to be added as :spec tag to function metadata and use that when checking.

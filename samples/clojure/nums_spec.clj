@@ -22,12 +22,19 @@
 )
 
 (defn spec-clojure-fixnum-addition []
-  (spec "Addition of small, positive fixnums"
+  (spec "+ with no arguments returns zero"
     (is == 0 (+))
+  )
+  (spec "Addition with zero changes nothing"
     (is == 0 (+ 0 0))
     (is == 1 (+ 0 1))
-    (is == 1 (+ 1 0))
+    (is == 99 (+ 99 0))
+  )
+  (spec "Addition of small, positive fixnums should give small, positive fixnums"
     (is == 2 (+ 1 1))
+    (is == 3 (+ 2 1))
+    (is == 3 (+ 1 2))
+    (is == 7 (+ 3 4))
   )
   (spec "Addition of small fixnums (both positive and negative)"
     (is == -1 (+ 0 -1))
@@ -45,7 +52,7 @@
   )
 )
 
-(defn spec-clojure-fixnum []
+(defn spec-suite-clojure-fixnum []
   (spec "Fixnum"
     (spec-clojure-fixnum-addition)
   )
@@ -54,7 +61,7 @@
 (defn spec-clojure-nums []
   (spec "Nums"
     (spec-clojure-fixnum-bignum-limits)
-    (spec-clojure-fixnum)
+    (spec-suite-clojure-fixnum)
   )
 )
 
