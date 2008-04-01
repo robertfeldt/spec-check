@@ -105,6 +105,7 @@ Todo:
 
 Possible Todos / Ideas:
 
+* Add all-are macro to check multiple forms in one go
 * Make it runnable from the command line. Example commands:
   * bar spec-re (fires up a Swing progressbar and shows red/green progress)
   * autocheck cljfiles-re & (sits in background and re-runs specs whenever there is a file change)

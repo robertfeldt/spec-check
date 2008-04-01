@@ -16,4 +16,5 @@
   (is not= 1 1)
   (is true? (every? (fn [v] (== 0 (rem v 2))) [2 4 6]))
   (is true? (every? (fn [v] (== 0 (rem v 2))) [2 4 7]))
-  (s))
+  (s)
+)

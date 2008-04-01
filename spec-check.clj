@@ -49,10 +49,10 @@
 
 (defn- show-failing-trial [code outcome fnfn argsfn]
 	(if (exception? outcome)
-	  (str "EXCEPTION:\n  the code was: " code ", but\n  it raised " (:exception outcome))
+	  (str "EXCEPTION:\n  expectation was: " code ", but\n  it raised " (:exception outcome))
 	  (let [func (fnfn) 
 		    report-fn (or (get *inverted-reporting-fns* func) (fn [f as] (str "arguments was: " (print-str (first as)))))]
-		 (str "FAILURE:\n  the code was: " code ", but\n  " (report-fn func (argsfn))))))
+		 (str "FAILURE:\n  expectation was: " code ", but\n  " (report-fn func (argsfn))))))
 
 (defn- log-trial [code outcome fnfn argsfn]
 	(set! *num-trials* (+ 1 *num-trials*))
@@ -72,15 +72,15 @@
 (def *report-all-trials* report-all-trials)
 (def *spec-stack*)
 
-(defmacro ismacro [code & fn-and-args]
+(defmacro expectation [code & fn-and-args]
+  "An expectation that FN applied to ARGS should return true that uses
+   CODE to document what was checked."
   `(let [outcome# (try (~@fn-and-args) (catch java.lang.Exception e# {:outcome 'exception :exception e#}))]
 	(*report-progress* outcome#)
 	(*log-trial* ~code outcome# (fn [] ~(first fn-and-args)) (fn [] [~@(rest fn-and-args)]))))
 
-(defmacro is [& fn-and-args]
-  "An expectation that FN applied to ARGS should return true."
-  `(ismacro (str "(is" ~@(for [e# fn-and-args] (str " " (print-str e#))) ")") 
-	        ~(first fn-and-args) ~@(rest fn-and-args)))
+(defmacro codestr [exp & parts]
+  `(str "(" ~exp ~@(for [p# parts] (str " " (print-str p#))) ")"))
 
 (defmacro spec [desc & body]
   "A spec is described by DESC and defined by expectations and specs in
@@ -113,7 +113,10 @@
 	     (*report-all-trials* timetaken#)))))
 
 ;; Utility functions and macros that builds on the core
+(defmacro is [& fn-and-args]
+  "An expectation that FN applied to ARGS should return true."
+  `(expectation (codestr "is" ~@fn-and-args) ~(first fn-and-args) ~@(rest fn-and-args)))
+
 (defmacro isnt [& fn-and-args]
-  "An expectation that FN applied to ARGS should return false."
-  `(ismacro (str "(isnt" ~@(for [e# fn-and-args] (str " " (print-str e#))) ")") 
-	        (complement ~(first fn-and-args)) ~@(rest fn-and-args)))
+  "An expectation that FN applied to ARGS should return true."
+  `(expectation (codestr "isnt" ~@fn-and-args) (complement ~(first fn-and-args)) ~@(rest fn-and-args)))
