@@ -24,15 +24,19 @@
 	    ""
 	    (str start (reduce (fn [acc e] (str acc separator (print-str e))) values)))))
 
+(defn- exception? [outcome] (= (class outcome) (class {})))
+(defn- failure-or-exception? [outcome] (or (not outcome) (exception? outcome)))
+
 (defn trial-outcome-description [outcome]
   (cond
-    (= true  outcome) \.
-	(= false outcome) \F
-	:else             \E))
+    (= true  outcome)    \.
+	(= false outcome)    \F
+	(exception? outcome) \E
+	:else                \U)) ; U just for debugging purposes
 
 (defn- print-progress [outcome]
-	(print (trial-outcome-description outcome))
-	(. *out* (flush)))
+	(print (trial-outcome-description outcome)))
+;	(. *out* (flush)))   Don't know why this doesn't work
 
 (def *failing-trials*)
 (def *checking-cases* false)
@@ -44,24 +48,19 @@
 	not= (fn [f as] (str "arguments *ARE* the same: " (join as)))
 })
 
-(defn- exception? [outcome]
-  (and (= (class outcome) (class {})) 
-       (= (:outcome outcome) 'exception)
-       (= (class (:exception outcome)) java.lang.Exception)))
-
-(defn- failure-or-exception? [outcome] (or (not outcome) (exception? outcome)))
-
 (defn- trial-problem-message [type descstack & messagestrings]
   (if (> (count descstack) 0)
-    (str type " in: " (join descstack " / ") (join messagestrings ""))
-    (str type ": " (join messagestrings ""))))
+    (str type " in " (join descstack " | ") (join messagestrings ""))
+    (str type (join messagestrings ""))))
 
-(defn- show-failing-trial [code outcome fnfn argsfn descstack]
-	(if (exception? outcome)
+(defn show-failing-trial [code outcome fnfn argsfn descstack]
+  (cond
+    (exception? outcome)
 	  (trial-problem-message "EXCEPTION" descstack 
 		"\n  expectation was: " code ", but\n  it raised " (:exception outcome))
-	  (let [func (fnfn) 
-		    report-fn (or (get *inverted-reporting-fns* func) (fn [f as] (str "arguments was: " (print-str (first as)))))]
+	(= false outcome)
+      (let [func (fnfn) 
+		    report-fn (or (get *inverted-reporting-fns* func) (fn [f as] (str "arguments was: " (pr-str (first as)))))]
 		 (trial-problem-message "FAILURE" descstack 
 			"\n  expectation was: " code ", but\n  " (report-fn func (argsfn))))))
 
@@ -100,7 +99,7 @@
   "A function spec (fspec) is a spec associated with the function FUNC. 
    It is is described by DESC and defined by expectations and specs in
    BODY."
-	`(binding [*spec-stack* (conj *spec-stack* ~desc)]
+	`(binding [*spec-stack* (conj *spec-stack* (str (if (= 'nil '~func) "" (str '~func "/")) ~desc))]
 		;(*cache-spec* ~func ~desc ~forms)
 	     (do ~@body)))
 

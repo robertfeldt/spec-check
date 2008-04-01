@@ -99,17 +99,16 @@ Done:
 
 * Core with expectations, specs and checking
 * Added utility macro isnt which is complement to is
+* Stack of spec descriptions updated and then used when reporting failures
 
 Todo:
 
-* Fix Exception reporting bug
-* Stack of spec descriptions updated and then used when reporting failures
 * Random testing via lazy collections
 * Add more self-checks in specs/spec-check_spec.clj
 * Fix so fspec actually saves specs in meta data for func?
 * Extend so can be run from command-line to load several specs and run them
   together.
-* Better reporting of line numbers where expectation failed
+* Reporting of line numbers where expectation failed?
 * Exhaustive testing via lazy collections
 * Verbose output formats to get lists of example uses from specs
 * Add more specs for Clojure's core funcitonality
