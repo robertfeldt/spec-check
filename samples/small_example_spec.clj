@@ -20,5 +20,6 @@
   (all-are true?
     (== 1 1)
     (not= 2 3)
+    (false? true) ; should fail 
   )
 )

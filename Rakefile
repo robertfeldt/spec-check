@@ -2,14 +2,14 @@ file "readme.html" => "README" do
   sh 'markdown README > readme.html'
 end
 
-task :default => :samples
+task :default => :selfcheck
 
 task :clobber do
   sh 'rm -rf latest_stable/readme.html'
 end
 
-task :check do
-  # Run self-checks!
+task :selfcheck do
+ sh 'clj specs/spec-check_spec.clj'
 end
 
 task :samples do

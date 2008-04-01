@@ -100,13 +100,13 @@ Done:
 
 Todo:
 
+* Fix Exception reporting bug
 * Stack of spec descriptions updated and then used when reporting failures
 * Random testing via lazy collections
-* Fix Exception reporting bug
+* Add more self-checks in specs/spec-check_spec.clj
 * Extend so can be run from command-line to load several specs and run them
   together.
 * Better reporting of line numbers where expectation failed
-* Write self-checks in specs/spec-check_spec.clj
 * Exhaustive testing via lazy collections
 * Verbose output formats to get lists of example uses from specs
 * Add more specs for Clojure's core funcitonality
@@ -119,3 +119,19 @@ Possible Todos / Ideas:
   * autocheck cljfiles-re & (sits in background and re-runs specs whenever there is a file change)
 * Produce html files showing examples, can they tie into the API docs format?
 * Allow specs to be added as :spec tag to function metadata and use that when checking.
+
+
+## Isn't this just a unit testing framework?
+
+I think it is important which words we use and "specifying behavior" is 
+more in line with what we ultimately want than "testing units".
+
+
+## Why are the self checks in the specs dir?
+
+I suggest that it is a good idea to separate spec files from the actual code.
+One possible convention could be that all spec files are collected in a
+specs dir.
+
+They are not in the sample dir since they are primarily specs and not samples
+of how to use spec-check.

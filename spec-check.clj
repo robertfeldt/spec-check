@@ -44,7 +44,10 @@
 	not= (fn [f as] (str "arguments *ARE* the same: " (join as)))
 })
 
-(defn- exception? [outcome] (and (= (class outcome) (class {})) (= (:outcome outcome) 'exception)))
+(defn- exception? [outcome]
+  (and (= (class outcome) (class {})) 
+       (= (:outcome outcome) 'exception)
+       (= (class (:exception outcome)) java.lang.Exception)))
 (defn- failure-or-exception? [outcome] (or (not outcome) (exception? outcome)))
 
 (defn- show-failing-trial [code outcome fnfn argsfn]
@@ -124,4 +127,4 @@
 (defmacro all-are [checkfn & forms]
   "State multiple expectations in one go, namely that 
    CHECKFN applied to each form in FORMS should return true."
-  `(for [f# [~@forms]] (is ~checkfn f#)))
+  `(for [f# [~@forms]] `(is ~~checkfn ~f#)))
