@@ -117,11 +117,18 @@
   `(if *checking-cases*
 	 (do ~@body) ; This is not the top-level check so just run the spec
 	 (binding [*checking-cases* true ; This is the top-level check so setup for check, run spec and then report
-	           *num-trials* 0
-	           *failing-trials* []
-	           *spec-stack* []]
+	           *num-trials* 0 *failing-trials* [] *spec-stack* []]
 	   (let [timetaken# (just-time (do ~@body))]
 	     (*report-all-trials* timetaken#)))))
+
+(defmacro for-all [seq-exprs & body]
+  "Take *num-rand-trials* values from the seqs in SEQ-EXPRS, assign them to the vars
+   and execute the expectations in BODY."
+  (let [seqs (take-nth 2 (drop 1 seq-exprs))
+	    vars (take-nth 2 seq-exprs)
+	    bounded-seqs (map (fn [seq] `(take *num-rand-trials* ~seq)) seqs)
+	    bounded-seq-exprs (interleave vars bounded-seqs)]
+    `(doall (for [~@bounded-seq-exprs] (do ~@body)))))
 
 ;; Utility functions and macros that builds on the core
 (defmacro is [& fn-and-args]
@@ -131,3 +138,34 @@
 (defmacro isnt [& fn-and-args]
   "An expectation that FN applied to ARGS should return true."
   `(expectation (codestr "isnt" ~@fn-and-args) (complement ~(first fn-and-args)) ~@(rest fn-and-args)))
+
+;; Value generation framework
+
+(def *max-fixnum* 2147483647)           ; 2^31 - 1
+(def *min-fixnum* -2147483648)          ; - 2^31
+(def *min-positive-bignum* 2147483648)  ; 2^32
+(def *max-negative-bignum* -2147483649) ; - 2^31 - 1
+
+(def *num-rand-trials* 100) ; number of generations of random data in for-all expectations
+
+;; Random in in range [min, max] inclusive
+(defn rr [min, max] (+ min (rand-int (inc (- max min)))))
+
+(defn seq-from-generator [generator-func]
+  (lazy-cons (generator-func) (seq-from-generator generator-func)))
+
+(defn rand-range-seq [min max] (seq-from-generator #(rr min max)))
+
+(def a-small-random-int (rand-range-seq -9 9))
+(def a-medium-random-int (rand-range-seq -99 99))
+(def a-large-random-int (rand-range-seq -1000 1000))
+;(def an-int (weighted-choice small-random-fixnum 50 medium-random-fixnum 45 large-random-fixnum 1))
+(def an-int a-medium-random-int)
+
+(def a-random-positive-fixnum (rand-range-seq 1 *max-fixnum*))
+(def a-small-random-positive-int (rand-range-seq 1 9))
+(def a-random-negative-fixnum (rand-range-seq *min-fixnum* -1))
+
+(def *max-coll-size* 12)
+
+(defn list-of [elementseq] (seq-from-generator #(apply list (take (rand-int *max-coll-size*) elementseq))))

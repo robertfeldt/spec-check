@@ -22,4 +22,6 @@
 
 (check
   (spec-factorial fac-with-recursion)
-  (spec-factorial fac-with-reduce))
+  (spec-factorial fac-with-reduce)
+  (for-all [n a-medium-random-int]
+    (is = (fac-with-recursion n) (fac-with-reduce n))))

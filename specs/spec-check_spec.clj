@@ -62,10 +62,51 @@
           (show-failing-trial "!" false (fn [] true?) (fn [] [false]) [])))
 )
 
+(def *rand-repeats* 100)
+
+(defn spec-rand-int-in []
+  (fspec rand-int-in 
+
+	(spec "only generates within range"
+      (dotimes [i *rand-repeats*]
+        (let [r (rand-int-in -12 27)]
+          (is >= r -12)
+          (is <= r 27))))
+
+	(spec "only generates within range"
+      (for [i (range *rand-repeats*)]
+        (let [r (rand-int-in  27)]
+          (is >= r -12)
+          (is <= r 27))))
+
+  )
+)
+
+(defn spec-random-fixnum-seqs
+
+  (fspec random-positive-fixnum
+
+    (spec "Can take a large set of numbers from the infinite collection"
+      (is = 2345 (count (take 2345 random-positive-fixnum))))
+
+    (spec "Can take a large set of numbers from the infinite collection"
+      (is = 2345 (count (take 2345 random-positive-fixnum))))
+
+    (spec "Always larger than 0 and less than minimum positive Bignum"
+      (for-all [n random-positive-fixnum]
+        (is > n 0)
+        (is <= n *max-fixnum*)))
+
+  )
+
+)
+
 (check
   (spec-join)
   (spec-trial-outcome-description)
   (spec-exception?)
   (spec-failure-or-exception?)
   (spec-show-failing-trial)
+  (spec-rand-int-in)
+;  (spec-random-fixnum-seqs)
 )

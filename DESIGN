@@ -34,3 +34,18 @@ sequence of forms are all spec cases and should all return a specific value:
   (check (all-are true?
     (= 1 1)
     (not= 1 2)))
+
+2. Why not use lazy seqs for the random testing?
+------------------------------------------------
+The original idea was to use Clojures' lazy seqs for the random testing.
+However, the problem with that is that once the value at a certain position in
+a Clojure collection has been set it is immutable. This did not play nicely with the
+way we use the seqs in the for-all binding expressions. It lead to an-int always returning
+the same, random sequence of ints for a particular run of the test.
+
+Thus we decided to go for generator functions that generates a new value each time they are 
+called.
+
+However, when we come to the exhaustive testing we might need to consider lazy seqs again
+since they should be elegant way of implementing infinite sequences of data values with
+some specific structure.
