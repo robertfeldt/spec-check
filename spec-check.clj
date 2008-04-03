@@ -27,7 +27,7 @@
 (defn- exception? [outcome] (= (class outcome) (class {})))
 (defn- failure-or-exception? [outcome] (or (not outcome) (exception? outcome)))
 
-(defn trial-outcome-description [outcome]
+(defn- trial-outcome-description [outcome]
   (cond
     (= true  outcome)    \.
 	(= false outcome)    \F
@@ -46,6 +46,8 @@
 	=    (fn [f as] (str "(not= " (join as) ")"))
 	==   (fn [f as] (str "arguments are *NOT* the same: " (join as)))
 	not= (fn [f as] (str "arguments *ARE* the same: " (join as)))
+    <=   (fn [f as] (str "(> " (join as) ")"))
+    >=   (fn [f as] (str "(< " (join as) ")"))
 })
 
 (defn- trial-problem-message [type descstack & messagestrings]
@@ -53,7 +55,7 @@
     (str type " in " (join descstack " | ") (join messagestrings ""))
     (str type (join messagestrings ""))))
 
-(defn show-failing-trial [code outcome fnfn argsfn descstack]
+(defn- show-failing-trial [code outcome fnfn argsfn descstack]
   (cond
     (exception? outcome)
 	  (trial-problem-message "EXCEPTION" descstack 
@@ -101,7 +103,7 @@
   "A function spec (fspec) is a spec associated with the function FUNC. 
    It is is described by DESC and defined by expectations and specs in
    BODY."
-	`(binding [*spec-stack* (conj *spec-stack* (str (if (= 'nil '~func) "" (str '~func "/")) ~desc))]
+	`(binding [*spec-stack* (conj *spec-stack* (str (if (= 'nil '~func) "" (str '~func ": ")) ~desc))]
 		;(*cache-spec* ~func ~desc ~forms)
 	     (do ~@body)))
 
@@ -141,31 +143,21 @@
 
 ;; Value generation framework
 
-(def *max-fixnum* 2147483647)           ; 2^31 - 1
-(def *min-fixnum* -2147483648)          ; - 2^31
-(def *min-positive-bignum* 2147483648)  ; 2^32
-(def *max-negative-bignum* -2147483649) ; - 2^31 - 1
+(defn randint
+  ([n]        (rand-int n))
+  ([low high] (+ low (rand-int (- high low)))))
 
-(def *num-rand-trials* 100) ; number of generations of random data in for-all expectations
+(defn generator [genfn] genfn)
 
-;; Random in in range [min, max] inclusive
-(defn rr [min, max] (+ min (rand-int (inc (- max min)))))
+(def an-int (generator #(randint -1000 1001)))
+(def a-pos-int (generator #(randint 1 1001)))
 
-(defn seq-from-generator [generator-func]
-  (lazy-cons (generator-func) (seq-from-generator generator-func)))
+(def *collection-size* 12) ; used when a collection is to be generated and the size is not supplied
 
-(defn rand-range-seq [min max] (seq-from-generator #(rr min max)))
+(defn vector-of
+  ([gen]      (vector-of gen (randint *collection-size*)))
+  ([gen size] (loop [count size res []] (if (= 0 count) res (recur (- count 1) (conj res (gen)))))))
 
-(def a-small-random-int (rand-range-seq -9 9))
-(def a-medium-random-int (rand-range-seq -99 99))
-(def a-large-random-int (rand-range-seq -1000 1000))
-;(def an-int (weighted-choice small-random-fixnum 50 medium-random-fixnum 45 large-random-fixnum 1))
-(def an-int a-medium-random-int)
-
-(def a-random-positive-fixnum (rand-range-seq 1 *max-fixnum*))
-(def a-small-random-positive-int (rand-range-seq 1 9))
-(def a-random-negative-fixnum (rand-range-seq *min-fixnum* -1))
-
-(def *max-coll-size* 12)
-
-(defn list-of [elementseq] (seq-from-generator #(apply list (take (rand-int *max-coll-size*) elementseq))))
+(defn list-of
+  ([gen]      (list-of gen (randint *collection-size*)))
+  ([gen size] (apply list (vector-of gen size))))

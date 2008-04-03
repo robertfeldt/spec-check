@@ -64,42 +64,36 @@
 
 (def *rand-repeats* 100)
 
-(defn spec-rand-int-in []
-  (fspec rand-int-in 
-
-	(spec "only generates within range"
-      (dotimes [i *rand-repeats*]
-        (let [r (rand-int-in -12 27)]
+(defn spec-randint []
+  (spec "Like rand-int but can also return a random number in a specified range from min (inclusive) to max (exclusive)."
+    (spec "work like Clojure's rand-int when given a single argument"
+      (dotimes i *rand-repeats*
+        (let [r (randint 42)]
+          (is >= r 0)
+          (is < r 42))))
+    (spec "work like Clojure's rand-int when given a single argument"
+      (dotimes i *rand-repeats*
+        (let [r (randint -12 27)]
           (is >= r -12)
-          (is <= r 27))))
+          (is < r 27))))))
 
-	(spec "only generates within range"
-      (for [i (range *rand-repeats*)]
-        (let [r (rand-int-in  27)]
-          (is >= r -12)
-          (is <= r 27))))
+(defn spec-integer-generator [gen min max]
+  (spec "Generates values in the right range inclusive"
+    (dotimes i *rand-repeats*
+      (let [v (gen)]
+        (is >= v min)
+        (is <= v max))))
+  (spec "Generated values are not the same all the time"
+    (let [genlist (list-of gen 100)]
+	  (isnt = 1 (count (distinct genlist))))))
+  
+(defn spec-an-int []
+  (fspec an-int ""
+    (spec-integer-generator an-int -1000 1000)))
 
-  )
-)
-
-(defn spec-random-fixnum-seqs
-
-  (fspec random-positive-fixnum
-
-    (spec "Can take a large set of numbers from the infinite collection"
-      (is = 2345 (count (take 2345 random-positive-fixnum))))
-
-    (spec "Can take a large set of numbers from the infinite collection"
-      (is = 2345 (count (take 2345 random-positive-fixnum))))
-
-    (spec "Always larger than 0 and less than minimum positive Bignum"
-      (for-all [n random-positive-fixnum]
-        (is > n 0)
-        (is <= n *max-fixnum*)))
-
-  )
-
-)
+(defn spec-a-pos-int []
+  (fspec a-pos-int ""
+    (spec-integer-generator a-pos-int 1 1000)))
 
 (check
   (spec-join)
@@ -107,6 +101,7 @@
   (spec-exception?)
   (spec-failure-or-exception?)
   (spec-show-failing-trial)
-  (spec-rand-int-in)
-;  (spec-random-fixnum-seqs)
+  (spec-randint)
+  (spec-an-int)
+  (spec-a-pos-int)
 )
