@@ -128,7 +128,7 @@
    and execute the expectations in BODY."
   (let [seqs (take-nth 2 (drop 1 seq-exprs))
 	    vars (take-nth 2 seq-exprs)
-	    bounded-seqs (map (fn [seq] `(take *num-rand-trials* ~seq)) seqs)
+	    bounded-seqs (map (fn [seq] `(~seq)) seqs)
 	    bounded-seq-exprs (interleave vars bounded-seqs)]
     `(doall (for [~@bounded-seq-exprs] (do ~@body)))))
 

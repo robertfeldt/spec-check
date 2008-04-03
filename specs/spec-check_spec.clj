@@ -62,27 +62,22 @@
           (show-failing-trial "!" false (fn [] true?) (fn [] [false]) [])))
 )
 
-(def *rand-repeats* 100)
-
 (defn spec-randint []
   (spec "Like rand-int but can also return a random number in a specified range from min (inclusive) to max (exclusive)."
     (spec "work like Clojure's rand-int when given a single argument"
-      (dotimes i *rand-repeats*
         (let [r (randint 42)]
           (is >= r 0)
-          (is < r 42))))
+          (is < r 42)))
     (spec "work like Clojure's rand-int when given a single argument"
-      (dotimes i *rand-repeats*
         (let [r (randint -12 27)]
           (is >= r -12)
-          (is < r 27))))))
+          (is < r 27)))))
 
 (defn spec-integer-generator [gen min max]
   (spec "Generates values in the right range inclusive"
-    (dotimes i *rand-repeats*
       (let [v (gen)]
         (is >= v min)
-        (is <= v max))))
+        (is <= v max)))
   (spec "Generated values are not the same all the time"
     (let [genlist (list-of gen 100)]
 	  (isnt = 1 (count (distinct genlist))))))
@@ -95,13 +90,34 @@
   (fspec a-pos-int ""
     (spec-integer-generator a-pos-int 1 1000)))
 
+(defn spec-vector-of []
+  (fspec vector-of ""
+    (spec "Generates a vector"
+        (is = (class []) (class (vector-of an-int))))
+    (spec "Generates vectors of the right length"
+      (let [len (randint 142)]
+        (is = len (count (vector-of an-int len)))))))
+
+(defn spec-list-of []
+  (fspec list-of ""
+    (spec "Generates a list"
+        (is = (class (list 'a)) (class (list-of an-int (randint 1 142)))))
+    (spec "Generates vectors of the right length"
+      (let [len (randint 142)]
+        (is = len (count (list-of an-int len)))))))
+
+(def *repeats* 50)
+
 (check
   (spec-join)
   (spec-trial-outcome-description)
   (spec-exception?)
   (spec-failure-or-exception?)
   (spec-show-failing-trial)
-  (spec-randint)
-  (spec-an-int)
-  (spec-a-pos-int)
+  (dotimes i *repeats* 
+    (spec-randint)
+    (spec-an-int)
+    (spec-a-pos-int)
+    (spec-vector-of)
+    (spec-list-of))
 )
