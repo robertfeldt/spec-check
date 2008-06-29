@@ -1,30 +1,32 @@
-1. Why we have to explicitly state when something is an expectation that should be checked?
--------------------------------------------------------------------------------------------
+A walk-through of the basic features and design choices
+-------------------------------------------------------
 The simplest possible specing framework would allow any expressions that evaluates to
 true or false to be used as spec cases. This would allow code like:
 
   (check 
     (= 1 1)
-    (not= 1 2))
+    (not= 1 2)
+  )
 
-to run two spec cases. However the problem with this design is in cases like
+to check two expectations. However the problem with this design is in cases like
 
   (check
     (let [a 10 b 20]
       (= (+ a 10) b)
       (not= a (- b 10))
       (= true (every? #(= 0 (rem %1 2)) [2 a b]))
-      (= false (string? 1))))
+      (= false (string? 1)))
+    )
 
 where the value from the first expression in the let binding would not be returned
-to the check function and thus would be missed. Thus we have decided that one must
-always explicitly state that an expression is an expectation. In most situations
-you will do this by usiing is or isnt:
+to the check function and thus would be missed. This would mean that the failure
+message could not be meaningful. Thus we one must always explicitly state that an 
+expression is an expectation. In most situations you will do this by using is or isnt:
 
   (check
     (let [a 10 b 20]
       (is = (+ a 10) b)
-      (isnt not= a (- b 10))
+      (isnt = a (- b 11))
       (is true? (every? #(= 0 (rem %1 2)) [0 2 4 6 8]))
       (is false? (string? 1))))
   
@@ -33,9 +35,214 @@ sequence of forms are all spec cases and should all return a specific value:
 
   (check (all-are true?
     (= 1 1)
-    (not= 1 2)))
+    (not= 1 2))
+  )
 
-2. Why not use lazy seqs for the random testing?
+With the "spec" macro we can state specifications and "add semantics" of what we 
+expect by describing that in a string:
+
+  (spec "Addition can take more than two arguments and will sum them all"
+    (is = 6 (+ 1 2 3))
+    (is = 11 (+ 1 2 3 5))
+  )
+
+The string will be used when checking the spec to signify which expectations hold
+or do not hold. So when the spec above is checked it will report:
+
+  Addition can take more than two arguments and will sum them all ..
+
+Specifications can be nested arbitrarily:
+
+  (spec "Integer addition"
+    (spec "with no arguments returns 0"
+      (is = 0 (+))
+    )
+    (spec "with one argument adds nothing but returns the arg"
+      (is = 3 (+ 3))
+    )
+    (spec "with more than two arguments will sum them all"
+      (spec "three arguments")
+        (is = 6 (+ 1 2 3)))
+      (spec "four arguments")
+        (is = 11 (+ 1 2 3 5)))
+    )
+  )
+
+and will respect the nesting when being checked:
+
+  Integer addition
+    with no arguments returns 0 .
+    with one argument adds nothing but returns the arg .
+    with more than two arguments will sum them all
+      three arguments .
+      four arguments .
+
+Specifications are typically collected into clojure files that
+are separate from the code that they specify. If so, they should 
+not be explicitly checked. For smaller files you can just 
+explicitly check the specification at the end of the file. In the
+example below we also show how specs can be parameterized and reused
+by enclosing them in normal functions:
+
+  (defn fac-with-recursion [n]
+    (if (< n 2)
+        1
+        (* n (fac-with-recursion (- n 1)))))
+  
+  (defn fac-with-reduce [n] (reduce * 1 (range 1 (+ n 1))))
+  
+  (defn spec-factorial [fac]
+    (spec "for small, positive integer arguments"
+      (is = 1       (fac 1))
+      (is = 2       (fac 2))
+      (is = 6       (fac 3))
+      (is = 24      (fac 4))
+      (is = 120     (fac 5))
+      (is = 720     (fac 6))
+      (is = 3628800 (fac 10))))
+  
+  (check
+    (spec "Different factorial implementations"
+      (spec "fac-with-recursion"
+        (spec-factorial fac-with-recursion))
+      (spec "fac-with-reduce"
+        (spec-factorial fac-with-reduce))
+    ))
+
+When executed this will report:
+
+  Different factorial implementations
+    fac-with-recursion
+      for small, positive integer arguments .......
+    fac-with-reduce
+      for small, positive integer arguments .......
+
+  14 expectations, 0 failures.
+
+Parameterized expectations
+--------------------------
+We can use parameters in expectations to state a whole set of expectations
+that must all hold. We do this by stating the expectation with a variable
+that we have bound to a value in a for-all:
+
+  (for-all [n a-positive-integer]
+    (is = (fac-with-recursion n) (fac-with-reduce n)))
+
+Note the similarity to list comprehensions in normal Clojure code using for.
+The difference is the vector which in for-all is a vector of one or more
+binding-form/generator pairs. A generator is an object used to create
+values that are bound to the binding form before the expectation is
+checked. In the example above a-positive-integer is a generator that generates
+positive integers. By default spec-check will check each expectation wrapped
+in a for-all 100 times and generate new values for the binding forms each 
+time. However, you can change this default and, for example, increase it
+to get more thorough testing.
+
+Generators
+----------
+You can define many different generators and types of generators to test
+your code. spec-check comes with a library of pre-made generators and 
+combinators that you can use to build your own based on the core ones.
+
+Generators are Clojure maps and the functions that are used to work with
+them are multimethods. This way you can customize the generators to generate
+exactly those values for which your parameterized expectations hold. The
+key function on a generator is gen which generates a value:
+
+  (gen a-positive-integer)
+
+returns a positive integer. Most generators are random generators so you will get
+a random positive integers in the call above.
+
+Generators can have integer parameters that shapes and controls the size of the
+values that are generated. For example, the first parameter is often taken
+to be the size of the value to be generated.
+
+have a notion of Order and Index that can be used to enumerate
+the values the generator contains. The order should roughly indicate the size
+of a typical value of that order. As an example the order of a vector is
+the number of elements within the vector. Within one order the values the
+generator can generate are indexed
+
+  a-positive-integer = (fgen [o, i] o)
+
+  (defn an-array-of [elementgenerator]
+    (fgen [o, i] ))
+
+  a-small-positive-integer = (cgen (range 0 11))
+  a-medium-positive-integer = (cgen (range 11 101))
+  a-large-positive-integer = (cgen (range 101 10001))
+  a-very-large-positive-integer = (fgen (fn [order size] (rand))
+  a-positive-integer = (seq-gen a-small-positive-integer (weighted-gen [90 a-medium-positive-integer]
+
+  (defmulti gen :GenerationStrategy)
+  
+Idea: Specify Generators with a grammar (similar to GP from BaseSet and FuncSet)
+Generators specifies two types of constructors: base and compound. The base 
+constructors creates values based on zero or more arguments. Arguments are 
+external to the constructor and can be either values or other generators.
+The compound constructors can take external arguments in the same fashion
+as base constructors but also take at least one internal argument.
+
+  PositiveInteger -> 0 | (inc PositiveInteger)
+
+  Tree(G1, G2) -> Leaf G1 | Node Tree G2 Tree   
+
+Använda samma tänk som i Grammatical Evolution? Dvs att man mappar en lista av ints till ett visst värde genom att numrera reglerna och sedan använda heltalen för att (modulo antal regler) välja en viss instans? Genom att man instansierar G1 och G2 får man en komplett data generation grammar (DAGG) som kan anvädas för att generera data.
+
+De strategier man sedan använder för att begränsa hur och vilka generatorer som skall väljas kan man också beskriva.
+
+Man får ett gigantiskt bibliotek av möjliga datavärden som sedan evolveras fram.
+
+Kan man använda Clojure direkt för att speca vilka generatorer som kan användas:
+
+  ;; Tree constructor
+  (defn make-tree [left val right] ^#[val left right])
+
+  (defn a-tree [g1 g2]
+    (grammar-gen g1
+                 (make-tree a-tree g2 a-tree)))
+
+  (defn a-positive-integer []
+    (grammar-gen 'PosInt 0
+                         (inc 'PosInt)))
+
+Man kan sedan spec:a olika strategier för hur en generator används för att verkligen generera ett värde.
+Saker som en strategi kan variera:
+  * Vilka sub-generatorer som skall användas
+    * Typ på sub-generatorer
+    * Samma eller olika typ om flera?
+  * Till vilket djup som sub-generatorerna skall användas
+  * Till vilket djup som generatorn själv skall användas.
+
+Fördelen med detta är att man inte måste generera alla möjliga kombinationer (à la SmallCheck) utan att man kan använda denna basform både för uttömmande och för slumpmässig testdata generering.
+
+RW: Maurer, 1990, TDG with Enhanced CFGs
+  Introduces the Data Generation Language (DGL)
+  "The data generator contains a grammar describing the tests and, when executed, it generates tests according to the grammar"
+  Can generate random tests but also systematic tests.
+
+RelatedWork: Vadim Zytsev, Grammar-Based Testing
+  http://www.cs.vu.nl/~vadim/writes/d/mscthesis-tele.pdf
+  Hans exjobb är av intresse
+
+  Focus on testing of GrammarWare. This is distinct from our goals.
+
+  They talk about controlling the combinatorial explosions via
+    depth control (how many steps down in derivation tree)
+    recursion control (which grammar combinations are allowed)
+    equivalence control (build equivalence classes??)
+    balance control (limit the preceding levels)
+    combination control (limit Cartesian product, pair-wise testing)
+    context control (enforce context conditions)
+
+  but they are grammar specific. We might be able to use some of these ideas this in different strategies though.
+  
+
+FAQ
+---
+
+1. Why not use lazy seqs for the random testing?
 ------------------------------------------------
 The original idea was to use Clojures' lazy seqs for the random testing.
 However, the problem with that is that once the value at a certain position in

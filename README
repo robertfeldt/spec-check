@@ -12,7 +12,7 @@ spec-check - Specification & checking of software behavior expectations
     Author:  Robert Feldt
     Email:   robert.feldt (at) gmail.com
     Version: 0.1
-    Date:    20080401
+    Date:    
     License: Common Public License
     
 
@@ -104,9 +104,7 @@ Done:
 
 Todo:
 
-* Use should as the main expectation macro name (and simply s as acronym)?
 * Add more self-checks in specs/spec-check_spec.clj
-* Fix so fspec actually saves specs in meta data for func?
 * Extend so can be run from command-line to load several specs and run them
   together.
 * Reporting of line numbers where expectation failed?
