@@ -40,9 +40,10 @@
   (print (trial-outcome-description outcome))
   (. *out* (flush)))
 
-(def *failing-trials*)
+(def *failing-trials* [])
 (def *checking-cases* false)
-(def *num-trials*)
+(def *num-trials* 0)
+(def *num-repetitions* 100)
 
 (def *inverted-reporting-fns* {
   =    (fn [f args] (str "(not= " (join args) ")"))
@@ -86,9 +87,9 @@
 (def *report-progress* print-progress)
 (def *log-trial* log-trial)
 (def *report-all-trials* report-all-trials)
-(def *spec-stack*)
+(def *spec-stack* [])
 
-(defmacro expectation [code & fn-and-args]
+(defmacro run-expectation [code & fn-and-args]
   "An expectation that FN applied to ARGS should return true that uses
    CODE to document what was checked."
   `(let [outcome# (try (~@fn-and-args) (catch java.lang.Exception e# {:outcome 'exception :exception e#}))]
@@ -111,7 +112,8 @@
   `(if *checking-cases*
 	 (do ~@body) ; This is not the top-level check so just run the spec
 	 (binding [*checking-cases* true ; This is the top-level check so setup for check, run spec and then report
-	           *num-trials* 0 *failing-trials* [] *spec-stack* []]
+	           *num-trials* 0 *failing-trials* [] *spec-stack* []
+	           *num-repetitions* 100]
 	   (*report-all-trials* (just-time (do ~@body))))))
 
 ;; The externally visible interface is the functions:
@@ -134,12 +136,19 @@
 
 ;; Utility functions and macros that builds on the core
 (defmacro is [& fn-and-args]
-  "An expectation that fn applied to args should return true."
-  `(expectation (codestr "is" ~@fn-and-args) ~(first fn-and-args) ~@(rest fn-and-args)))
+  "Run the expectation that fn applied to args should return true."
+  `(run-expectation (codestr "is" ~@fn-and-args) ~(first fn-and-args) ~@(rest fn-and-args)))
 
 (defmacro isnt [& fn-and-args]
-  "An expectation that FN applied to ARGS should return false."
-  `(expectation (codestr "isnt" ~@fn-and-args) (complement ~(first fn-and-args)) ~@(rest fn-and-args)))
+  "Run the expectation that FN applied to ARGS should return false."
+  `(run-expectation (codestr "isnt" ~@fn-and-args) (complement ~(first fn-and-args)) ~@(rest fn-and-args)))
+
+(defmacro are-allways? [& fn-and-args]
+  "Repeatedly run the expectation in fn-and-args."
+  ;; We must loop over the is since we want it to be counted as *num-repetitions*
+  ;; assertion checks.
+  `(doall (for [i# (range 0 *num-repetitions*)] 
+            (is ~@fn-and-args))))
 
 (defmacro for-all [generator-exprs & body]
   "Take *num-rand-trials* values from the seqs in SEQ-EXPRS, assign them to the vars
@@ -150,27 +159,59 @@
 	    bounded-seq-exprs (interleave variables bounded-seqs)]
     `(doall (for [~@bounded-seq-exprs] (do ~@body)))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Value generation framework
+;;
 
-(defn randint
-  ([n]        (rand-int n))
-  ([low high] (+ low (rand-int (- high low)))))
+;; A generator is a map with :type returning the generator type
+;; that is used for dispatch.
+(defmulti setup-generation :type)
+(defmulti gen :type)
+(defmulti gensize (fn [generator size] (:type generator)))
+(defmulti generate (fn [generator size index] (:type generator)))
 
-(defn generator [genfn] genfn)
+;; Default is that there is no setup, i.e. the generator has no state.
+(defmethod setup-generation :default [gen] nil)
 
-(def an-int (generator #(randint -1000 1001)))
-(def a-pos-int (generator #(randint 1 1001)))
+(def *max-fixnum* 2147483647)           ; 2^31 - 1
 
-(def *collection-size* 12) ; used when a collection is to be generated and the size is not supplied
+(defn make-random-gen
+  "A RandomGenerator is just a generator function that given
+   a size and an index returns a random value of that size.
+   We can specify the default maxsize to use when a value of
+   unspecified size is to be generated, if not a default maxsize
+   of 42 is used."
+  ([genfn]         (make-random-gen 42 genfn))
+  ([maxsize genfn] {:type :RandomGenerator, 
+                    :generatorfn genfn, :maxsize maxsize}))
 
-(defn vector-of
-  ([gen]      (vector-of gen (randint *collection-size*)))
-  ([gen size] (loop [count size res []] (if (= 0 count) res (recur (- count 1) (conj res (gen)))))))
+;;Default gen function is to use a random size (within maxsize).
+(defmethod gen :RandomGenerator
+  [gen] (gensize gen (rand-int (:maxsize gen))))
 
-(defn list-of
-  ([gen]      (list-of gen (randint *collection-size*)))
-  ([gen size] (apply list (vector-of gen size))))
+(defmethod gensize :RandomGenerator
+  [gen size] (generate gen size (rand-int *max-fixnum*)))
 
+(defmethod generate :RandomGenerator
+  [gen size index] ((:generatorfn gen) size index))
+
+(def a-positive-fixnum
+  (make-random-gen (fn [size index] (rem index size))))
+
+(def a-char
+  (make-random-gen 256 (fn [size index] 
+    (char (generate a-positive-fixnum (rem size 256) index)))))
+
+;;(defn vector-of
+;;  ([gen]      (vector-of gen (randint *collection-size*)))
+;;  ([gen size] (loop [count size res []] (if (= 0 count) res (recur (- count 1) (conj res (gen)))))))
+
+;;(defn list-of
+;;  ([gen]      (list-of gen (randint *collection-size*)))
+;;  ([gen size] (apply list (vector-of gen size))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Check spec files given in glob patterns
 ;;
 

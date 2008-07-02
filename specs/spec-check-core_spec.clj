@@ -1,10 +1,7 @@
-(load-file "spec-check.clj")
-(clojure/refer 'spec)
-
 (in-ns 'spec) ; we need to be able to access the defn- functions to test them
+(clojure/refer 'clojure)
 
-(defn spec-join []
-  {:specifies join}
+(fspec join
   (spec "Return empty string if no values given"
     (is = "" (join []))
     (is = "" (join [] " "))
