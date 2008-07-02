@@ -99,18 +99,6 @@
 (defmacro codestr [exp & parts]
   `(str "(" ~exp ~@(for [p# parts] (str " " (print-str p#))) ")"))
 
-(defmacro spec [desc & body]
-  "A spec is described by DESC and defined by expectations and specs in
-   BODY."
-  `(fspec nil ~desc ~@body))
-
-(defmacro fspec [func desc & body]
-  "A function spec (fspec) is a spec associated with the function FUNC. 
-   It is is described by DESC and defined by expectations and specs in
-   BODY."
-	`(binding [*spec-stack* (conj *spec-stack* (str (if (= 'nil '~func) "" (str '~func ": ")) ~desc))]
-	     (do ~@body)))
-
 (defmacro just-time
   "Evaluates expr and returns the number of seconds it took."
   [expr]
@@ -126,6 +114,33 @@
 	           *num-trials* 0 *failing-trials* [] *spec-stack* []]
 	   (*report-all-trials* (just-time (do ~@body))))))
 
+;; The externally visible interface is the functions:
+;;   spec
+;;   fspec
+;;   is
+;;   isnt
+
+(defmacro spec [description & body]
+  "A spec described by description and defined by expectations and 
+   nested specs in body."
+  `(fspec nil ~description ~@body))
+
+(defmacro fspec [func description & body]
+  "A function spec (fspec) is a spec associated with the function func. 
+   It is is described by description and defined by expectations and 
+   specs in body."
+	`(binding [*spec-stack* (conj *spec-stack* (str (if (= 'nil '~func) "" (str '~func ": ")) ~description))]
+	     (do ~@body)))
+
+;; Utility functions and macros that builds on the core
+(defmacro is [& fn-and-args]
+  "An expectation that fn applied to args should return true."
+  `(expectation (codestr "is" ~@fn-and-args) ~(first fn-and-args) ~@(rest fn-and-args)))
+
+(defmacro isnt [& fn-and-args]
+  "An expectation that FN applied to ARGS should return false."
+  `(expectation (codestr "isnt" ~@fn-and-args) (complement ~(first fn-and-args)) ~@(rest fn-and-args)))
+
 (defmacro for-all [generator-exprs & body]
   "Take *num-rand-trials* values from the seqs in SEQ-EXPRS, assign them to the vars
    and execute the expectations in BODY."
@@ -134,15 +149,6 @@
 	    bounded-seqs (map (fn [seq] `(~seq)) generators)
 	    bounded-seq-exprs (interleave variables bounded-seqs)]
     `(doall (for [~@bounded-seq-exprs] (do ~@body)))))
-
-;; Utility functions and macros that builds on the core
-(defmacro is [& fn-and-args]
-  "An expectation that FN applied to ARGS should return true."
-  `(expectation (codestr "is" ~@fn-and-args) ~(first fn-and-args) ~@(rest fn-and-args)))
-
-(defmacro isnt [& fn-and-args]
-  "An expectation that FN applied to ARGS should return false."
-  `(expectation (codestr "isnt" ~@fn-and-args) (complement ~(first fn-and-args)) ~@(rest fn-and-args)))
 
 ;; Value generation framework
 
@@ -165,11 +171,14 @@
   ([gen]      (list-of gen (randint *collection-size*)))
   ([gen size] (apply list (vector-of gen size))))
 
+;; Check spec files given in glob patterns
+;;
+
 ;; Check files matching the given glob patterns
 (defn check-files [globpatterns]
   (check
     (doall (for [globp globpatterns] 
-      (do (println "Checking:" globp)
+      (do (println globp)
           (load-file globp)
           (newline))))))
 

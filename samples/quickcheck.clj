@@ -4,6 +4,10 @@
       (and (== x y) (== y z))
       (and (* 2 x) (+ y z)))))
 
+;;(spec "ReverseReverse - Example 2 from Quickcheck's ExSimple.hs"
+;;  (for-all [xs (list-of an-integer)]
+;;    (is = xs (reverse (reverse xs)))))
+
 (spec "ReverseReverse - Example 2 from Quickcheck's ExSimple.hs"
-  (for-all [xs (list-of an-integer)]
+  (when [(seq? xs)]
     (is = xs (reverse (reverse xs)))))

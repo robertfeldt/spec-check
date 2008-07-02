@@ -11,7 +11,7 @@ spec-check - Specification & checking of software behavior expectations
 =======================================================================
     Author:  Robert Feldt
     Email:   robert.feldt (at) gmail.com
-    Version: 0.1
+    Version: 0.2
     Date:    
     License: Common Public License
     
@@ -100,13 +100,13 @@ Done:
 * Core with expectations, specs and checking
 * Added utility macro isnt which is complement to is
 * Stack of spec descriptions updated and then used when reporting failures
-* Random testing via generator functions
+* Extend so can be run from command-line to load several specs and run them
+  together.
 
 Todo:
 
+* Random testing via generator functions
 * Add more self-checks in specs/spec-check_spec.clj
-* Extend so can be run from command-line to load several specs and run them
-  together.
 * Reporting of line numbers where expectation failed?
 * Exhaustive testing (via lazy collections)
 * Verbose output formats to get lists of example uses from specs
@@ -116,7 +116,7 @@ Possible Todos / Ideas:
 
 * filters on lazy collections in for-all?
 * Add all-are macro to check multiple forms in one go?
-* Make it runnable from the command line. Example commands:
+* Start with GUI's from the command line. Example commands:
   * bar spec-re (fires up a Swing progressbar and shows red/green progress)
   * autocheck cljfiles-re & (sits in background and re-runs specs whenever there is a file change)
 * Produce html files showing examples, can they tie into the API docs format?

@@ -123,20 +123,44 @@ Parameterized expectations
 --------------------------
 We can use parameters in expectations to state a whole set of expectations
 that must all hold. We do this by stating the expectation with a variable
-that we have bound to a value in a for-all:
+that is constrained with a constraint expression in a for-all:
 
   (for-all [n a-positive-integer]
     (is = (fac-with-recursion n) (fac-with-reduce n)))
 
 Note the similarity to list comprehensions in normal Clojure code using for.
 The difference is the vector which in for-all is a vector of one or more
-binding-form/generator pairs. A generator is an object used to create
+binding-form/constraint pairs. A generator is an object used to create
 values that are bound to the binding form before the expectation is
 checked. In the example above a-positive-integer is a generator that generates
 positive integers. By default spec-check will check each expectation wrapped
 in a for-all 100 times and generate new values for the binding forms each 
 time. However, you can change this default and, for example, increase it
 to get more thorough testing.
+
+Constraint expressions
+----------------------
+Constraint expressions specify how values to bind to should be generated.
+For now they can be:
+
+* named generator constraints, or
+* X
+
+A named generator constraint is a symbol that starts with a- or an- and
+that
+
+* type expressions
+
+s are used to specify 
+Longer-term we will add different types of constraints but for now
+Constraints can be either 
+
+* generators
+* generator expressions, 
+
+
+which are evaluated
+to generate values that are then matched to the binding-form.
 
 Generators
 ----------
