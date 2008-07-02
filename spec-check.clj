@@ -43,7 +43,8 @@
 (def *failing-trials* [])
 (def *checking-cases* false)
 (def *num-trials* 0)
-(def *num-repetitions* 100)
+(def *default-options* {:NumRepetitions 50})
+(def *options* *default-options*)
 
 (def *inverted-reporting-fns* {
   =    (fn [f args] (str "(not= " (join args) ")"))
@@ -113,7 +114,7 @@
 	 (do ~@body) ; This is not the top-level check so just run the spec
 	 (binding [*checking-cases* true ; This is the top-level check so setup for check, run spec and then report
 	           *num-trials* 0 *failing-trials* [] *spec-stack* []
-	           *num-repetitions* 100]
+	           *options* *default-options*]
 	   (*report-all-trials* (just-time (do ~@body))))))
 
 ;; The externally visible interface is the functions:
@@ -147,7 +148,7 @@
   "Repeatedly run the expectation in fn-and-args."
   ;; We must loop over the is since we want it to be counted as *num-repetitions*
   ;; assertion checks.
-  `(doall (for [i# (range 0 *num-repetitions*)] 
+  `(doall (for [i# (range 0 (:NumRepetitions *options*))] 
             (is ~@fn-and-args))))
 
 (defmacro for-all [generator-exprs & body]
@@ -214,6 +215,28 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Check spec files given in glob patterns
 ;;
+
+;; Map from options specified on the command line to their option name.
+(def *options-map* {
+  "-n"                :NumRepetitions
+  "-N"                :NumRepetitions
+  "--numreps"         :NumRepetitions
+  "--num-repetitions" :NumRepetitions
+})
+
+(defn readstr [str] (read (new java.io.PushbackReader (new java.io.StringReader str))))
+
+(defn options-and-specfiles
+  "Extract the options and specfile globpatterns from the command line args"
+  [clargs]
+  (loop [i 0 options {} specfiles []]
+    (if (>= i (count clargs))
+        [options specfiles]
+        (let [a (nth clargs i)]
+          (if (= \- (first a))
+            (recur (+ i 2) (assoc options (get *options-map* a) (readstr (nth clargs (+ i 1))))
+                           specfiles)
+            (recur (+ i 1) options (conj specfiles a)))))))
 
 ;; Check files matching the given glob patterns
 (defn check-files [globpatterns]
