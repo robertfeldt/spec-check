@@ -113,8 +113,7 @@
   `(if *checking-cases*
 	 (do ~@body) ; This is not the top-level check so just run the spec
 	 (binding [*checking-cases* true ; This is the top-level check so setup for check, run spec and then report
-	           *num-trials* 0 *failing-trials* [] *spec-stack* []
-	           *options* *default-options*]
+	           *num-trials* 0 *failing-trials* [] *spec-stack* []]
 	   (*report-all-trials* (just-time (do ~@body))))))
 
 ;; The externally visible interface is the functions:
@@ -252,4 +251,6 @@
 
 ;; Run clj spec files specified on the command line
 (if (> (count *command-line-args*) 0) 
-    (check-files *command-line-args*))
+    (let [[options specfiles] (parse-command-line-args *command-line-args*)]
+      (binding [*options* (merge *default-options* options)]
+        (check-files specfiles))))
