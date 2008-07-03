@@ -216,17 +216,20 @@
 ;; Check spec files given in glob patterns
 ;;
 
-;; Map from options specified on the command line to their option name.
-(def *options-map* {
-  "-n"                :NumRepetitions
-  "-N"                :NumRepetitions
-  "--numreps"         :NumRepetitions
-  "--num-repetitions" :NumRepetitions
-})
-
 (defn readstr [str] (read (new java.io.PushbackReader (new java.io.StringReader str))))
 
-(defn options-and-specfiles
+;; Map from options specified on the command line to their option name.
+(def *options-map* {
+  "-n"                [:NumRepetitions, 1, (fn [a] (readstr a))]
+  "-N"                [:NumRepetitions, 1, (fn [a] (readstr a))]
+  "--numreps"         [:NumRepetitions, 1, (fn [a] (readstr a))]
+  "--num-repetitions" [:NumRepetitions, 1, (fn [a] (readstr a))]
+  "-v"                [:Verbose, 0, (fn [] true)]
+  "-V"                [:Verbose, 0, (fn [] true)]
+  "--verbose"         [:Verbose, 0, (fn [] true)]
+})
+
+(defn parse-command-line-args
   "Extract the options and specfile globpatterns from the command line args"
   [clargs]
   (loop [i 0 options {} specfiles []]
@@ -234,8 +237,9 @@
         [options specfiles]
         (let [a (nth clargs i)]
           (if (= \- (first a))
-            (recur (+ i 2) (assoc options (get *options-map* a) (readstr (nth clargs (+ i 1))))
-                           specfiles)
+            (let [[option numargs parsefn] (get *options-map* a)
+                  args (take numargs (drop (+ i 1) clargs))]
+              (recur (+ i 1 numargs) (assoc options option (apply parsefn args)) specfiles))
             (recur (+ i 1) options (conj specfiles a)))))))
 
 ;; Check files matching the given glob patterns
